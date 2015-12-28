@@ -5,7 +5,9 @@ import com.microsoft.tfs.core.clients.versioncontrol.VersionControlClient;
 import com.microsoft.tfs.core.clients.webservices.IIdentityManagementService;
 import com.microsoft.tfs.core.clients.webservices.IdentityManagementException;
 import com.microsoft.tfs.core.clients.webservices.IdentityManagementService;
+import com.microsoft.tfs.core.httpclient.ProxyHost;
 import hudson.Launcher;
+import hudson.ProxyConfiguration;
 import hudson.model.TaskListener;
 import hudson.plugins.tfs.commands.ServerConfigurationProvider;
 
@@ -18,6 +20,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.microsoft.tfs.core.TFSTeamProjectCollection;
 import com.microsoft.tfs.core.httpclient.Credentials;
@@ -28,6 +31,7 @@ import com.microsoft.tfs.core.util.URIUtils;
 import com.microsoft.tfs.util.Closable;
 import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
+import jenkins.model.Jenkins;
 
 public class Server implements ServerConfigurationProvider, Closable {
     
@@ -63,11 +67,46 @@ public class Server implements ServerConfigurationProvider, Closable {
         }
 
         if (credentials != null) {
-            this.tpc = new TFSTeamProjectCollection(uri, credentials);
+            final ProxyHost proxyHost = determineProxyHost(uri);
+            final ModernConnectionAdvisor advisor = new ModernConnectionAdvisor(proxyHost);
+            this.tpc = new TFSTeamProjectCollection(uri, credentials, advisor);
         }
         else {
             this.tpc = null;
         }
+    }
+
+    static ProxyHost determineProxyHost(final URI uri) {
+        final Jenkins jenkins = Jenkins.getInstance();
+        final ProxyConfiguration proxyConfiguration = jenkins == null ? null : jenkins.proxy;
+        final ProxyHost proxyHost;
+        if (proxyConfiguration != null) {
+            final String host = uri.getHost();
+            boolean shouldProxy = shouldProxy(proxyConfiguration, host);
+            if (shouldProxy) {
+                // TODO: The version of httpclient used by the TFS SDK does not support proxy auth
+                proxyHost = new ProxyHost(proxyConfiguration.name, proxyConfiguration.port);
+            }
+            else {
+                proxyHost = null;
+            }
+        }
+        else {
+            proxyHost = null;
+        }
+        return proxyHost;
+    }
+
+    static boolean shouldProxy(final ProxyConfiguration proxyConfiguration, final String host) {
+        // inspired by https://github.com/jenkinsci/git-client-plugin/commit/2fefeae06db79d09d6604994001f8f2bd21549e1
+        boolean shouldProxy = true;
+        for (final Pattern p : proxyConfiguration.getNoProxyHostPatterns()) {
+            if (p.matcher(host).matches()) {
+                shouldProxy = false;
+                break;
+            }
+        }
+        return shouldProxy;
     }
 
     Server(String url) throws IOException {
