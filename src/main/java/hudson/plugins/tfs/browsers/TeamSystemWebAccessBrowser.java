@@ -13,8 +13,8 @@ import hudson.scm.SCM;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
-import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBrowser {
@@ -53,38 +53,38 @@ public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBr
     }
 
     /*
-     * http://tswaserver:8090/cs.aspx?cs=99
+     * Gets the link to a specific change set.
+     * E.g. http://tswaserver:8090/_versionControl/changeset/99
      */
     @Override
     public URL getChangeSetLink(ChangeSet changeSet) throws IOException {
-        return new URL(String.format("%scs.aspx?cs=%s", getBaseUrlString(changeSet), changeSet.getVersion()));
+      return new URL(String.format("%s_versionControl/changeset/%s",
+                                  getBaseUrlString(changeSet),
+                                  changeSet.getVersion()));
     }
 
     /*
-     * http://tswaserver:8090/view.aspx?path=$/Project/Folder/file.cs&cs=99
+     * Gets the link for a specific file in a change set.
      */
     public URL getFileLink(ChangeSet.Item item) throws IOException {
-        return new URL(String.format("%sview.aspx?path=%s&cs=%s", getBaseUrlString(item.getParent()), item.getPath(), item.getParent().getVersion()));
+      return new URL(String.format("%s_versionControl/changeset/%s#path=%s&_a=contents",
+                                   getBaseUrlString(item.getParent()),
+                                   item.getParent().getVersion(),
+                                   URLEncoder.encode(item.getPath(),"UTF-8")));
     }
 
     /*
-     * http://tswaserver:8090/diff.aspx?opath=$/Project/Folder/file.cs&ocs=99&mpath=$/Project/Folder/file.cs&mcs=98
+     * Gets the Compare to a specific file in a change set.
      */
     public URL getDiffLink(ChangeSet.Item item) throws IOException {
         ChangeSet parent = item.getParent();
         if (item.getEditType() != EditType.EDIT) {
             return null;
-        }
-        try {
-            return new URL(String.format("%sdiff.aspx?opath=%s&ocs=%s&mpath=%s&mcs=%s", 
-                    getBaseUrlString(parent), 
-                    item.getPath(),
-                    getPreviousChangeSetVersion(parent), 
-                    item.getPath(),
-                    parent.getVersion()));
-        } catch (NumberFormatException nfe) {
-            return null;
-        }
+        } 
+        return new URL(String.format("%s_versionControl/changeset/%s#path=%s&_a=compare",
+                                  getBaseUrlString(item.getParent()),
+                                  item.getParent().getVersion(),
+                                  URLEncoder.encode(item.getPath(),"UTF-8")));
     }
     
     private String getPreviousChangeSetVersion(ChangeSet changeset) throws NumberFormatException {
@@ -104,8 +104,14 @@ public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBr
         }
         
         public static String getBaseUrl(String urlExample) throws MalformedURLException {
-        	URL url = new URL(urlExample);
-        	return new URL(url.getProtocol(), url.getHost(), url.getPort(), String.format("/%s", FilenameUtils.getPath(url.getPath()))).toString();
+
+          URL url = new URL(urlExample);
+          String path = url.getPath();
+          // path needs to end with / and users sometimes forget so we add it
+          if (!path.endsWith("/")) {
+            path = path + "/";
+          }
+          return new URL(url.getProtocol(), url.getHost(), url.getPort(), path).toString();
         }
     }
 }
