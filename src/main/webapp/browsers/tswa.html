@@ -1,12 +1,10 @@
 <div>
   <p>
-	Enter the URL to the TSWA server. Examples:<tt>http://tswasrv</tt> or <tt>http://TFSMachine:8080/</tt>.
-	The plugin will strip the last path (if any) of the URL when building URLs for change set pages and other pages. 
+	Enter the URL to your project on the TSWA server, used for browser-based access.
   </p>	 
   <p>
-    If the field is empty then the plugin will try to build up a valid URL using the server URL.
-    For instance if the server URL is <tt>https://server:8090</tt> then the plugin will
-    creates links such as <tt>https://server:8090/cs.aspx?cs=99</tt>, which is identical if the user entered 
-    <tt>https://server:8090</tt> into this field.  
+  For example, if you browse to a changeset on your project with a URL like <tt>http://tfs.example.com/tfs/dev/coll/_versionControl/changeset/91211</tt>, 
+  the URL to provide here is <tt>http://tfs.example.com/tfs/dev/coll/</tt>. Depending on your setup this could also use HTTPS or a shorter path 
+  as well as a port and look more like <tt>https://tfsserver/coll</tt> or <tt>http://tfsserver:8080/coll</tt>
   </p>
 </div>
