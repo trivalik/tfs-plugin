@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import com.microsoft.tfs.core.clients.versioncontrol.specs.version.ChangesetVersionSpec;
 import com.microsoft.tfs.core.clients.versioncontrol.specs.version.DateVersionSpec;
 import com.microsoft.tfs.core.clients.versioncontrol.specs.version.VersionSpec;
+import hudson.plugins.tfs.browsers.TeamSystemWebAccessBrowser;
 import hudson.util.Secret;
 import net.sf.json.JSONObject;
 
@@ -87,7 +88,7 @@ public class TeamFoundationServerScm extends SCM {
     private final String userName;
     private final boolean useUpdate;
     
-    private TeamFoundationServerRepositoryBrowser repositoryBrowser;
+    private transient TeamFoundationServerRepositoryBrowser repositoryBrowser = new TeamSystemWebAccessBrowser(null);
 
     private transient String normalizedWorkspaceName;
     private transient String workspaceChangesetVersion;
@@ -412,6 +413,9 @@ public class TeamFoundationServerScm extends SCM {
 
     @Override
     public TeamFoundationServerRepositoryBrowser getBrowser() {
+        if (repositoryBrowser == null) {
+            repositoryBrowser = new TeamSystemWebAccessBrowser(null);
+        }
         return repositoryBrowser;
     }
 
@@ -461,7 +465,6 @@ public class TeamFoundationServerScm extends SCM {
         @Override
         public SCM newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             TeamFoundationServerScm scm = (TeamFoundationServerScm) super.newInstance(req, formData);
-            scm.repositoryBrowser = RepositoryBrowsers.createInstance(TeamFoundationServerRepositoryBrowser.class,req,formData,"browser");
             return scm;
         }
 
