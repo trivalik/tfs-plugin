@@ -91,10 +91,6 @@ public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBr
                                   item.getParent().getVersion(),
                                   URLEncoder.encode(item.getPath(),"UTF-8")));
     }
-    
-    private String getPreviousChangeSetVersion(ChangeSet changeset) throws NumberFormatException {
-        return Integer.toString(Integer.parseInt(changeset.getVersion()) - 1);
-    }
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<RepositoryBrowser<?>> {
