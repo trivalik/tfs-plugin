@@ -2,9 +2,11 @@ package hudson.plugins.tfs.browsers;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.plugins.tfs.TeamFoundationServerScm;
+import hudson.plugins.tfs.model.ChangeLogSet;
 import hudson.plugins.tfs.model.ChangeSet;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
@@ -33,10 +35,13 @@ public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBr
     }
 
     private String getServerConfiguration(ChangeSet changeset) {
-        AbstractProject<?, ?> project = changeset.getParent().build.getProject();
-        SCM scm = project.getScm();
+        final ChangeLogSet changeLogSet = changeset.getParent();
+        final AbstractBuild<?, ?> build = changeLogSet.build;
+        final AbstractProject<?, ?> project = build.getProject();
+        final SCM scm = project.getScm();
         if (scm instanceof TeamFoundationServerScm) {
-            return ((TeamFoundationServerScm) scm).getServerUrl(changeset.getParent().build);
+            final TeamFoundationServerScm tfsScm = (TeamFoundationServerScm) scm;
+            return tfsScm.getServerUrl(build);
         } else {
             throw new IllegalStateException("TFS repository browser used on a non TFS SCM");
         }
