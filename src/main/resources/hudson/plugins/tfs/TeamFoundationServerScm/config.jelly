@@ -36,6 +36,4 @@
             <f:textarea checkUrl="'${rootURL}/scm/TeamFoundationServerScm/cloakedPathsCheck?value='+escape(this.value)"/>
         </f:entry>
     </f:advanced>
-    
-    <t:listScmBrowsers name="tfs.browser" />
 </j:jelly>
