@@ -48,17 +48,8 @@ public class TeamSystemWebAccessBrowser extends TeamFoundationServerRepositoryBr
     }
 
     private String getBaseUrlString(ChangeSet changeSet) throws MalformedURLException {
-        String baseUrl;
-        if (url != null) {
-            baseUrl = DescriptorImpl.getBaseUrl(url);
-        } else {
-            String scmUrl = getServerConfiguration(changeSet);
-            if (scmUrl.endsWith("/")) {
-              baseUrl = scmUrl;
-            } else {
-              baseUrl = String.format("%s/", scmUrl);
-            }
-        }
+        String baseUrl = getServerConfiguration(changeSet);
+        baseUrl = DescriptorImpl.getBaseUrl(baseUrl);
         return baseUrl;
     }
 
